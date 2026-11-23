@@ -305,10 +305,13 @@ progress::-moz-progress-bar { background: linear-gradient(90deg, #aa83e1, #f4ce9
   background: #21182d;
 }
 .collection-entry .item-frame { border: 1px solid #725759; border-radius: 5px; overflow: hidden; }
+.collection-entry.rarity-4 .item-frame { border-color: #806199; }
 .collection-entry .item-emblem { width: 55%; }
 .collection-name { overflow-wrap: anywhere; font-size: .95rem; font-weight: 650; }
 .collection-count { color: var(--gold); font-size: .95rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .collection-note { color: var(--muted); font-size: .9rem; line-height: 1.45; margin-top: 12px; }
+.collection-four { margin-top: 19px; padding-top: 16px; border-top: 1px solid var(--border); }
+.collection-four .result-heading .icon, .collection-four .collection-count { color: #dcb8fc; }
 
 .site-footer { display: flex; justify-content: space-between; gap: 10px; margin-top: 25px; padding: 16px 0 25px; border-top: 1px solid #3c304d99; color: var(--dim); font-size: .85rem; }
 .site-footer a { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }

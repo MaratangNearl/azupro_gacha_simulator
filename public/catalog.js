@@ -58,6 +58,7 @@ export const observations = {
   fate: {
     name: '운명 관측',
     kind: '한정 캐릭터',
+    type: 'character',
     icon: 'fate',
     odds: characterOdds,
     four: fourStarCharacters,
@@ -70,6 +71,7 @@ export const observations = {
   bond: {
     name: '인연 관측',
     kind: '한정 무기',
+    type: 'weapon',
     icon: 'sword',
     odds: weaponOdds,
     four: [weapons[4]],
@@ -82,6 +84,7 @@ export const observations = {
   order: {
     name: '질서 관측',
     kind: '상시 캐릭터',
+    type: 'character',
     icon: 'order',
     odds: characterOdds,
     five: standardCharacters,
@@ -93,6 +96,7 @@ export const observations = {
   eternity: {
     name: '영원 관측',
     kind: '상시 무기',
+    type: 'weapon',
     icon: 'order',
     odds: weaponOdds,
     five: [weapons[5]],
@@ -103,6 +107,7 @@ export const observations = {
   leap: {
     name: '도약 관측',
     kind: '초보자 캐릭터',
+    type: 'character',
     icon: 'leap',
     odds: characterOdds,
     limit: 30,

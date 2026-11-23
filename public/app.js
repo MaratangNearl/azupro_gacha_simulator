@@ -1,5 +1,5 @@
 import { firstReward, fourStarGuarantee, fourStarRate, items, observations, rewardInterval, standardCharacters } from './catalog.js';
-import { draw, emptyProgress, nextFiveRate, nextRewardAt, restoreFiveCounts, restoreFourPlusPity, summarizeFiveStars } from './gacha.js';
+import { draw, emptyProgress, nextFiveRate, nextRewardAt, restoreFiveCounts, restoreFourCounts, restoreFourPlusPity, summarizeFiveStars } from './gacha.js';
 
 const storageKey = 'azur-promilia-observation-v1';
 const observationIds = Object.keys(observations);
@@ -45,6 +45,7 @@ function readState() {
 
     state.fiveByItem = restoreFiveCounts(observation, state, stored?.fiveByItem);
     state.fourPlusPity = restoreFourPlusPity(state, stored?.fourPlusPity);
+    restoreFourCounts(observation, state, stored?.fourByBanner, stored?.fourHistoryPartial);
     progress[id] = state;
     selected[id] = observation.banners.find(banner => banner.id === saved?.selected?.[id])?.id
       ?? observation.banners[0].id;
@@ -168,24 +169,37 @@ function renderResults(animate = false) {
   return counts;
 }
 
-function renderCollection() {
-  const { observation, banner, progress } = current();
-  const { counts, total, unknown } = summarizeFiveStars(progress, banner.target?.id);
-  const list = $('collection-list');
-  const note = $('collection-note');
-  $('collection-heading').textContent = `${banner.target?.name ?? observation.name} 5성 누적 획득`;
-  $('collection-total').textContent = `총 ${formatNumber(total)}회`;
+function renderCollectionList(list, counts, rarity) {
   list.hidden = Object.keys(counts).length === 0;
-  $('collection-empty').hidden = total > 0 || unknown > 0;
-  note.hidden = !unknown;
-  note.textContent = unknown ? `이 관측의 이전 기록에서 획득 대상을 확인할 수 없는 5성이 ${formatNumber(unknown)}개 있습니다.` : '';
   list.innerHTML = Object.values(items).filter(item => counts[item.id]).map(item => `
-    <li class="collection-entry rarity-5">
+    <li class="collection-entry rarity-${rarity}">
       <span class="item-frame">${itemArt(item)}</span>
       <span class="collection-name">${item.name}</span>
       <strong class="collection-count">${formatNumber(counts[item.id])}회</strong>
     </li>
   `).join('');
+}
+
+function renderCollection() {
+  const { observation, banner, progress } = current();
+  const { counts, total, unknown } = summarizeFiveStars(progress, banner.target?.id);
+  const note = $('collection-note');
+  $('collection-heading').textContent = `${banner.target?.name ?? observation.name} 5성 누적 획득`;
+  $('collection-total').textContent = `총 ${formatNumber(total)}회`;
+  $('collection-empty').hidden = total > 0 || unknown > 0;
+  note.hidden = !unknown;
+  note.textContent = unknown ? `이 관측의 이전 기록에서 획득 대상을 확인할 수 없는 5성이 ${formatNumber(unknown)}개 있습니다.` : '';
+  renderCollectionList($('collection-list'), counts, 5);
+
+  const tracksCharacters = observation.type === 'character';
+  $('collection-four').hidden = !tracksCharacters;
+  if (!tracksCharacters) return;
+  const fourCounts = progress.fourByBanner[banner.id] ?? {};
+  const fourTotal = Object.values(fourCounts).reduce((sum, count) => sum + count, 0);
+  $('collection-four-total').textContent = `총 ${formatNumber(fourTotal)}회`;
+  $('collection-four-empty').hidden = fourTotal > 0;
+  $('collection-four-note').hidden = !progress.fourHistoryPartial || !progress.latest[banner.id];
+  renderCollectionList($('collection-four-list'), fourCounts, 4);
 }
 
 function renderReward() {
@@ -260,7 +274,7 @@ function pull(count) {
   renderProgress();
   renderReward();
   const counts = renderResults(true);
-  if (counts[5]) renderCollection();
+  if (counts[5] || counts[4]) renderCollection();
   $('announcement').textContent = `누적 ${formatNumber(progress.total)}회. 이번 관측에서 5성 ${counts[5]}개, 4성 ${counts[4]}개, 3성 ${counts[3]}개를 획득했습니다.`;
   if (matchMedia('(max-width: 760px)').matches) {
     const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
@@ -301,7 +315,8 @@ $('reset-open').addEventListener('click', () => {
   const observation = observations[resetObservationId];
   const scope = observation.banners.length > 1 ? `${observation.name}의 두 배너` : observation.name;
   const rewards = observation.reward ? ', 선택 보상' : '';
-  $('reset-description').textContent = `${scope} 초기화 시 뽑기 횟수, 천장 진행도, 최근 결과, 5성 획득 기록${rewards}이 삭제됩니다.`;
+  const rarity = observation.type === 'character' ? '4·5성' : '5성';
+  $('reset-description').textContent = `${scope} 초기화 시 뽑기 횟수, 천장 진행도, 최근 결과, ${rarity} 획득 기록${rewards}이 삭제됩니다.`;
   $('reset-dialog').returnValue = '';
   $('reset-dialog').showModal();
 });

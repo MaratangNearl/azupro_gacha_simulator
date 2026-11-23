@@ -1,7 +1,12 @@
 import { firstReward, fourStarGuarantee, fourStarRate, items, rewardInterval } from './catalog.js';
 
 export function emptyProgress() {
-  return { total: 0, pity: 0, fourPlusPity: 0, fiveCount: 0, fiveByItem: {}, rewards: [], latest: {} };
+  return {
+    total: 0, pity: 0, fourPlusPity: 0,
+    fiveCount: 0, fiveByItem: {},
+    fourByBanner: {}, fourHistoryPartial: false,
+    rewards: [], latest: {},
+  };
 }
 
 export function restoreFiveCounts(observation, progress, savedCounts) {
@@ -47,6 +52,39 @@ export function restoreFourPlusPity(progress, savedPity) {
     return batch.length - 1 - lastRare;
   });
   return knownStreaks.length ? Math.min(max, ...knownStreaks) : 0;
+}
+
+export function restoreFourCounts(observation, progress, savedCounts, savedPartial) {
+  if (observation.type !== 'character') return;
+
+  const possible = new Set(observation.four.map(item => item.id));
+  let remaining = progress.total - progress.fiveCount;
+  const hasSavedCounts = savedCounts && typeof savedCounts === 'object' && !Array.isArray(savedCounts);
+  let recoverablePulls = 0;
+  for (const { id } of observation.banners) {
+    const batch = progress.latest[id] ?? [];
+    recoverablePulls += batch.length;
+    const counts = {};
+    if (hasSavedCounts) {
+      const stored = savedCounts[id] ?? {};
+      for (const [itemId, count] of Object.entries(stored)) {
+        if (possible.has(itemId) && Number.isSafeInteger(count) && count > 0 && count <= remaining) {
+          counts[itemId] = count;
+          remaining -= count;
+        }
+      }
+    } else {
+      // Previous saves contain only the last result for each banner.
+      for (const itemId of batch) {
+        if (remaining && possible.has(itemId)) {
+          counts[itemId] = (counts[itemId] ?? 0) + 1;
+          remaining -= 1;
+        }
+      }
+    }
+    if (Object.keys(counts).length) progress.fourByBanner[id] = counts;
+  }
+  progress.fourHistoryPartial = hasSavedCounts ? savedPartial === true : progress.total > recoverablePulls;
 }
 
 export function summarizeFiveStars(progress, targetId) {
@@ -110,6 +148,10 @@ export function draw(observation, banner, progress, count, random = Math.random)
       if (fourPlusDue || roll < rate + fourStarRate) item = choose(observation.four, random);
     }
     progress.fourPlusPity = item.rarity >= 4 ? 0 : progress.fourPlusPity + 1;
+    if (item.rarity === 4 && observation.type === 'character') {
+      const counts = (progress.fourByBanner[banner.id] ??= {});
+      counts[item.id] = (counts[item.id] ?? 0) + 1;
+    }
 
     progress.total += 1;
     if (progress.total === rewardAt) progress.rewards.push({ at: rewardAt, itemId: null });
