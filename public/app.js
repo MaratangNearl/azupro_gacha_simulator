@@ -143,7 +143,10 @@ function itemArt(item) {
 }
 
 function itemContent(item) {
-  return `<span class="item-frame">${itemArt(item)}<span class="item-stars" aria-label="${item.rarity}성">${'★'.repeat(item.rarity)}</span></span>
+  return `<span class="item-frame">${itemArt(item)}<span class="item-stars" role="img" aria-label="${item.rarity}성">
+      <span class="item-star-glyphs" aria-hidden="true">${'★'.repeat(item.rarity)}</span>
+      <span class="item-rarity-text" aria-hidden="true">${item.rarity}성</span>
+    </span></span>
     <span class="item-name">${item.name}</span>`;
 }
 
