@@ -16,15 +16,12 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     const button = document.getElementById('theme-toggle');
-    const label = document.getElementById('theme-label');
     const icon = document.getElementById('theme-icon');
 
     function renderToggle() {
       const isDark = root.dataset.theme === 'dark';
-      label.textContent = isDark ? '라이트 모드' : '다크 모드';
-      button.title = `${label.textContent}로 전환`;
-      button.setAttribute('aria-label', button.title);
       icon.setAttribute('href', isDark ? '#icon-sun' : '#icon-moon');
+      document.dispatchEvent(new Event('azur-themechange'));
     }
 
     button.addEventListener('click', () => {

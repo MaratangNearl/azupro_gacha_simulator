@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="아주르 프로밀리아의 한정·상시·초보자 관측을 체험하고 5성 픽업 확률과 천장까지 남은 횟수를 확인하세요.">
+  <meta name="description" content="아주르 프로밀리아의 캐릭터와 무기를 뽑아보세요.">
   <meta name="theme-color" content="#f7f2fb">
   <title>관측 시뮬레이터 · 아주르 프로밀리아</title>
   <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
@@ -24,6 +24,7 @@
     <symbol id="icon-gift" viewBox="0 0 24 24"><path d="M3 8h18v5H3zm2 5v8h14v-8m-7-5v13m0-13H8a2.5 2.5 0 1 1 2-4l2 4Zm0 0h4a2.5 2.5 0 1 0-2-4l-2 4Z"/></symbol>
     <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
     <symbol id="icon-link" viewBox="0 0 24 24"><path d="M13 5h6v6m0-6-8 8m6 0v6H5V7h6"/></symbol>
+    <symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></symbol>
     <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M21 13a9 9 0 1 1-10-10 7 7 0 0 0 10 10Z"/></symbol>
     <symbol id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
   </svg>
@@ -32,12 +33,16 @@
     <div class="header-inner wrap">
       <div class="brand">
         <img src="/assets/mark.svg" width="38" height="38" alt="">
-        <div><span class="brand-name">아주르 프로밀리아</span><span class="brand-latin">AZUR PROMILIA</span></div>
+        <div><span class="brand-name" data-i18n="brand">아주르 프로밀리아</span><span class="brand-latin" lang="en">AZUR PROMILIA</span></div>
       </div>
       <div class="header-actions">
-        <button class="text-button guide-button" id="guide-open" type="button">
-          <svg class="icon" aria-hidden="true"><use href="#icon-info"/></svg> 확률 안내
+        <button class="text-button guide-button" id="guide-open" type="button" data-i18n-label="guide">
+          <svg class="icon" aria-hidden="true"><use href="#icon-info"/></svg><span data-i18n="guide">확률 안내</span>
         </button>
+        <label class="text-button language-control">
+          <svg class="icon" aria-hidden="true"><use href="#icon-globe"/></svg>
+          <select id="language-select" data-i18n-label="language" aria-label="언어 선택"></select>
+        </label>
         <button class="text-button theme-button" id="theme-toggle" type="button" aria-label="다크 모드로 전환" title="다크 모드로 전환">
           <svg class="icon" aria-hidden="true"><use id="theme-icon" href="#icon-moon"/></svg>
           <span id="theme-label">다크 모드</span>
@@ -48,10 +53,10 @@
 
   <main class="wrap">
     <div class="page-intro">
-      <h1>관측 시뮬레이터</h1>
-      <p>아주르 프로밀리아의 캐릭터와 무기를 뽑아보세요.</p>
+      <h1 data-i18n="heading">관측 시뮬레이터</h1>
+      <p data-i18n="intro">아주르 프로밀리아의 캐릭터와 무기를 뽑아보세요.</p>
     </div>
-    <div class="observation-tabs" id="observation-tabs" role="tablist" aria-label="관측 종류"></div>
+    <div class="observation-tabs" id="observation-tabs" role="tablist" data-i18n-label="observationTabs" aria-label="관측 종류"></div>
 
     <div id="observation-panel" role="tabpanel">
       <div class="observation-layout">
@@ -62,15 +67,15 @@
             <h2 id="banner-title"></h2>
             <div class="hero-stars" id="banner-stars" aria-label="5성">★★★★★</div>
             <p id="banner-description"></p>
-            <div class="banner-options" id="banner-options" role="group" aria-label="픽업 배너 선택"></div>
+            <div class="banner-options" id="banner-options" role="group" data-i18n-label="bannerOptions" aria-label="픽업 배너 선택"></div>
           </div>
         </section>
 
         <section class="controls surface" aria-labelledby="progress-heading">
           <div class="section-heading">
-            <h2 id="progress-heading">관측 현황</h2>
+            <h2 id="progress-heading" data-i18n="progressHeading">관측 현황</h2>
             <button class="text-button reset-button" id="reset-open" type="button">
-              <svg class="icon" aria-hidden="true"><use href="#icon-reset"/></svg> 초기화
+              <svg class="icon" aria-hidden="true"><use href="#icon-reset"/></svg><span data-i18n="reset">초기화</span>
             </button>
           </div>
           <div class="pity">
@@ -78,39 +83,39 @@
             <progress id="pity-meter" value="0" max="90" aria-labelledby="pity-label"></progress>
           </div>
           <dl class="stats">
-            <div><dt>누적 관측</dt><dd id="total-pulls"></dd></div>
-            <div><dt>5성 기본 확률</dt><dd id="base-rate"></dd></div>
-            <div><dt>다음 5성 확률</dt><dd id="next-rate"></dd></div>
+            <div><dt data-i18n="totalPulls">누적 관측</dt><dd id="total-pulls"></dd></div>
+            <div><dt data-i18n="baseRate">5성 기본 확률</dt><dd id="base-rate"></dd></div>
+            <div><dt data-i18n="nextRate">다음 5성 확률</dt><dd id="next-rate"></dd></div>
           </dl>
           <p class="rate-note" id="rate-note"></p>
           <p class="rarity-note" id="rarity-note"></p>
           <div class="actions">
-            <button class="pull-button pull-one" id="pull-one" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-fate"/></svg> 1회 관측</button>
-            <button class="pull-button pull-ten" id="pull-ten" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-fate"/></svg> 10회 관측</button>
+            <button class="pull-button pull-one" id="pull-one" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-fate"/></svg><span data-i18n="pullOne">1회 관측</span></button>
+            <button class="pull-button pull-ten" id="pull-ten" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-fate"/></svg><span data-i18n="pullTen">10회 관측</span></button>
           </div>
         </section>
       </div>
 
       <section class="reward surface" id="reward-section" aria-labelledby="reward-heading" hidden>
         <div class="reward-icon"><svg class="icon" aria-hidden="true"><use href="#icon-gift"/></svg></div>
-        <div class="reward-copy"><h2 id="reward-heading">상시 5성 선택 보상</h2><p id="reward-status"></p></div>
-        <button class="text-button reward-button" id="reward-open" type="button">캐릭터 선택</button>
+        <div class="reward-copy"><h2 id="reward-heading" data-i18n="rewardTitle">상시 5성 선택 보상</h2><p id="reward-status"></p></div>
+        <button class="text-button reward-button" id="reward-open" type="button" data-i18n="rewardChoose">캐릭터 선택</button>
       </section>
 
       <section class="results surface" aria-labelledby="result-heading">
         <div class="section-heading">
           <div class="result-heading">
             <svg class="icon" aria-hidden="true"><use href="#icon-fate"/></svg>
-            <h2 id="result-heading">관측 결과</h2>
+            <h2 id="result-heading" data-i18n="resultsHeading">관측 결과</h2>
           </div>
           <div class="result-summary" id="result-summary" hidden></div>
         </div>
         <div class="empty-results" id="empty-results">
           <div class="constellation" aria-hidden="true"><i></i><i></i><i></i><img src="/assets/mark.svg" alt=""></div>
-          <p>아직 관측 결과가 없습니다</p>
-          <span>1회 또는 10회 관측으로 시작하세요.</span>
+          <p data-i18n="resultsEmpty">아직 관측 결과가 없습니다</p>
+          <span data-i18n="resultsHint">1회 또는 10회 관측으로 시작하세요.</span>
         </div>
-        <ul class="result-grid" id="result-grid" aria-label="최근 관측에서 획득한 아이템" hidden></ul>
+        <ul class="result-grid" id="result-grid" data-i18n-label="resultsList" aria-label="최근 관측에서 획득한 아이템" hidden></ul>
       </section>
     </div>
 
@@ -122,55 +127,58 @@
         </div>
         <span class="collection-count" id="collection-total"></span>
       </div>
-      <p class="collection-note" id="collection-empty">아직 획득한 5성이 없습니다.</p>
+      <p class="collection-note" id="collection-empty" data-i18n="collectionFiveEmpty">아직 획득한 5성이 없습니다.</p>
       <ul class="collection-list" id="collection-list" hidden></ul>
       <p class="collection-note" id="collection-note" hidden></p>
       <section class="collection-four" id="collection-four" aria-labelledby="collection-four-heading" hidden>
         <div class="section-heading">
           <div class="result-heading">
             <svg class="icon" aria-hidden="true"><use href="#icon-order"/></svg>
-            <h2 id="collection-four-heading">4성 캐릭터 누적 획득</h2>
+            <h2 id="collection-four-heading" data-i18n="collectionFour">4성 캐릭터 누적 획득</h2>
           </div>
           <span class="collection-count" id="collection-four-total"></span>
         </div>
-        <p class="collection-note" id="collection-four-empty">아직 기록된 4성 캐릭터가 없습니다.</p>
+        <p class="collection-note" id="collection-four-empty" data-i18n="collectionFourEmpty">아직 기록된 4성 캐릭터가 없습니다.</p>
         <ul class="collection-list" id="collection-four-list" hidden></ul>
-        <p class="collection-note" id="collection-four-note" hidden>업데이트 이전의 획득 기록은 저장된 최근 결과만 반영됩니다.</p>
+        <p class="collection-note" id="collection-four-note" data-i18n="collectionFourLegacy" hidden>업데이트 이전의 획득 기록은 저장된 최근 결과만 반영됩니다.</p>
       </section>
     </section>
     <div class="sr-only" id="announcement" role="status" aria-live="polite"></div>
   </main>
 
   <footer class="site-footer wrap">
-    <span>아주르 프로밀리아 팬 시뮬레이터</span>
-    <a href="https://azurpromilia.org/en" target="_blank" rel="noopener noreferrer">캐릭터 이미지 출처 <svg class="icon" aria-hidden="true"><use href="#icon-link"/></svg></a>
+    <span data-i18n="footer">아주르 프로밀리아 팬 시뮬레이터</span>
+    <div class="footer-links">
+      <a class="text-button" href="https://github.com/MaratangNearl/azupro_gacha_simulator" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="https://azurpromilia.org/en" target="_blank" rel="noopener noreferrer"><span data-i18n="imageSource">캐릭터 이미지 출처</span><svg class="icon" aria-hidden="true"><use href="#icon-link"/></svg></a>
+    </div>
   </footer>
 
   <dialog id="guide-dialog" aria-labelledby="guide-heading">
     <div class="dialog-heading">
-      <h2 id="guide-heading">확률 안내</h2>
-      <form method="dialog"><button class="icon-button" aria-label="닫기" autofocus><svg class="icon"><use href="#icon-close"/></svg></button></form>
+      <h2 id="guide-heading" data-i18n="guide">확률 안내</h2>
+      <form method="dialog"><button class="icon-button" data-i18n-label="close" aria-label="닫기" autofocus><svg class="icon"><use href="#icon-close"/></svg></button></form>
     </div>
     <div id="guide-content"></div>
   </dialog>
 
   <dialog id="reset-dialog" aria-labelledby="reset-heading">
-    <div class="dialog-heading"><h2 id="reset-heading">관측 기록 초기화</h2></div>
+    <div class="dialog-heading"><h2 id="reset-heading" data-i18n="resetHeading">관측 기록 초기화</h2></div>
     <p id="reset-description"></p>
     <form method="dialog" class="dialog-actions">
-      <button class="pull-button pull-one" value="cancel" autofocus>취소</button>
-      <button class="pull-button pull-ten" value="reset">초기화</button>
+      <button class="pull-button pull-one" value="cancel" data-i18n="cancel" autofocus>취소</button>
+      <button class="pull-button pull-ten" value="reset" data-i18n="reset">초기화</button>
     </form>
   </dialog>
 
   <dialog id="reward-dialog" class="reward-dialog" aria-labelledby="reward-dialog-heading">
     <div class="dialog-heading">
-      <h2 id="reward-dialog-heading">상시 5성 캐릭터 선택</h2>
-      <form method="dialog"><button class="icon-button" aria-label="닫기" autofocus><svg class="icon"><use href="#icon-close"/></svg></button></form>
+      <h2 id="reward-dialog-heading" data-i18n="rewardDialogHeading">상시 5성 캐릭터 선택</h2>
+      <form method="dialog"><button class="icon-button" data-i18n-label="close" aria-label="닫기" autofocus><svg class="icon"><use href="#icon-close"/></svg></button></form>
     </div>
     <p id="reward-dialog-description"></p>
-    <div class="reward-grid" id="reward-choices" role="group" aria-label="획득할 캐릭터"></div>
-    <div class="dialog-actions"><button class="pull-button pull-ten" id="reward-claim" type="button" disabled>선택한 캐릭터 획득</button></div>
+    <div class="reward-grid" id="reward-choices" role="group" data-i18n-label="rewardChoices" aria-label="획득할 캐릭터"></div>
+    <div class="dialog-actions"><button class="pull-button pull-ten" id="reward-claim" type="button" data-i18n="rewardClaim" disabled>선택한 캐릭터 획득</button></div>
   </dialog>
 </body>
 </html>

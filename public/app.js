@@ -1,13 +1,52 @@
 import { firstReward, fourStarGuarantee, fourStarRate, items, observations, rewardInterval, standardCharacters } from './catalog.js';
 import { draw, emptyProgress, nextFiveRate, nextRewardAt, restoreFiveCounts, restoreFourCounts, restoreFourPlusPity, summarizeFiveStars } from './gacha.js';
+import { bannerName, decimal, itemName, languages, number, observationName, percent, pullCount, resolveLanguage, setLanguage, t } from './localization.js';
 
 const storageKey = 'azur-promilia-observation-v1';
+const languageKey = 'azur-promilia-language';
 const observationIds = Object.keys(observations);
 const standardIds = new Set(standardCharacters.map(item => item.id));
 const $ = id => document.getElementById(id);
-const formatNumber = new Intl.NumberFormat('ko-KR').format;
-const percent = rate => `${rate.toFixed(1)}%`;
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#icon-${name}"/></svg>`;
+
+function initialLanguage() {
+  let saved;
+  try {
+    saved = localStorage.getItem(languageKey);
+  } catch {
+    // The browser preference still applies without storage.
+  }
+  return resolveLanguage([...navigator.languages, navigator.language].filter(Boolean), saved);
+}
+
+function renderThemeLabel() {
+  const mode = t(document.documentElement.dataset.theme === 'dark' ? 'themeLight' : 'themeDark');
+  $('theme-label').textContent = mode;
+  $('theme-toggle').title = t('themeChange', { mode });
+  $('theme-toggle').setAttribute('aria-label', $('theme-toggle').title);
+}
+
+function renderLanguage(locale) {
+  setLanguage(locale);
+  document.documentElement.lang = locale;
+  $('language-select').value = locale;
+  document.title = `${t('heading')} · ${t('brand')}`;
+  document.querySelector('meta[name="description"]').content = t('intro');
+  for (const element of document.querySelectorAll('[data-i18n]')) {
+    element.textContent = t(element.dataset.i18n);
+  }
+  for (const element of document.querySelectorAll('[data-i18n-label]')) {
+    element.setAttribute('aria-label', t(element.dataset.i18nLabel));
+  }
+  $('banner-stars').setAttribute('aria-label', t('rarity', { n: 5 }));
+  $('observation-tabs').innerHTML = observationIds.map(id => `
+    <button class="observation-tab" id="tab-${id}" data-observation="${id}" role="tab" aria-controls="observation-panel" type="button">
+      ${icon(observations[id].icon)}<span><strong>${observationName(id)}</strong><small>${t(`${id}Kind`)}</small></span>
+    </button>`).join('');
+  $('announcement').textContent = '';
+  renderThemeLabel();
+  render();
+}
 
 function readState() {
   let saved;
@@ -84,10 +123,8 @@ function renderTabs() {
 }
 
 function bannerDescription(id, observation) {
-  if (id === 'order') return `최대 ${observation.odds.cap}회 내 5성 확정. 누적 관측으로 상시 5성 선택권을 얻습니다.`;
-  if (id === 'eternity') return '원하는 상시 5성 무기를 지정하면 5성 획득 시 해당 무기가 확정됩니다.';
-  if (id === 'leap') return `최대 ${observation.limit}회 내 상시 5성 캐릭터 1명 확정.`;
-  return `5성 등장 시 이 배너의 픽업 대상이 확정됩니다. 최대 ${observation.odds.cap}회 안에 획득할 수 있습니다.`;
+  const key = { order: 'orderDescription', eternity: 'eternityDescription', leap: 'leapDescription' }[id] ?? 'featuredGuarantee';
+  return t(key, { count: pullCount(observation.limit ?? observation.odds.cap) });
 }
 
 function renderBanner() {
@@ -95,11 +132,11 @@ function renderBanner() {
   $('hero').dataset.theme = banner.theme;
   $('hero').dataset.art = banner.id;
   $('banner-image').src = `/assets/banners/${banner.id}.jpg`;
-  $('banner-label').textContent = banner.label;
-  $('banner-title').textContent = banner.target?.name ?? observation.name;
+  $('banner-label').textContent = bannerName(banner, state.active);
+  $('banner-title').textContent = banner.target ? itemName(banner.target) : observationName(state.active);
   $('banner-description').textContent = bannerDescription(state.active, observation);
   $('banner-options').innerHTML = observation.banners.length < 2 ? '' : observation.banners.map(option => `
-    <button class="banner-option" type="button" data-banner="${option.id}" aria-pressed="${option.id === banner.id}">${option.target.name}</button>
+    <button class="banner-option" type="button" data-banner="${option.id}" aria-pressed="${option.id === banner.id}">${itemName(option.target)}</button>
   `).join('');
 }
 
@@ -110,29 +147,29 @@ function renderProgress() {
   const max = observation.limit ?? cap;
   const meterValue = observation.limit ? progress.total : progress.pity;
   const remaining = observation.limit ? observation.limit - progress.total : Infinity;
-  $('total-pulls').textContent = `${formatNumber(progress.total)}회`;
+  $('total-pulls').textContent = pullCount(progress.total);
   $('base-rate').textContent = percent(base);
   $('next-rate').textContent = rate === null ? '—' : percent(rate);
-  $('pity-label').textContent = observation.limit ? '도약 관측 진행도' : '5성 천장 진행도';
-  $('pity-value').textContent = `${meterValue} / ${max}회`;
+  $('pity-label').textContent = t(observation.limit ? 'beginnerProgress' : 'pityLabel');
+  $('pity-value').textContent = `${number(meterValue)} / ${pullCount(max)}`;
   $('pity-meter').max = max;
   $('pity-meter').value = meterValue;
   $('pull-one').disabled = remaining < 1;
   $('pull-ten').disabled = remaining < 10;
   $('reset-open').disabled = progress.total === 0;
   $('rarity-note').hidden = remaining < 1;
-  $('rarity-note').textContent = `4성 이상 보장까지 최대 ${fourStarGuarantee - progress.fourPlusPity}회`;
+  $('rarity-note').textContent = t('fourPlusGuarantee', { count: pullCount(fourStarGuarantee - progress.fourPlusPity) });
 
   if (!remaining) {
-    $('rate-note').textContent = '도약 관측이 종료되었습니다.';
+    $('rate-note').textContent = t('beginnerEnded');
   } else if (rate === 100) {
-    $('rate-note').textContent = '다음 관측에서 5성이 확정됩니다.';
+    $('rate-note').textContent = t('nextGuaranteed');
   } else if (rate > base) {
-    $('rate-note').textContent = `5성 확률 보정 +${(rate - base).toFixed(1)}%p 적용 중`;
+    $('rate-note').textContent = t('rateBoost', { delta: decimal(rate - base) });
   } else if (observation.limit && progress.fiveCount) {
-    $('rate-note').textContent = `5성 획득 완료 · 관측 종료까지 ${remaining}회`;
+    $('rate-note').textContent = t('beginnerAcquired', { count: pullCount(remaining) });
   } else {
-    $('rate-note').textContent = `5성 확정까지 최대 ${max - meterValue}회`;
+    $('rate-note').textContent = t('fiveGuarantee', { count: pullCount(max - meterValue) });
   }
 }
 
@@ -143,11 +180,11 @@ function itemArt(item) {
 }
 
 function itemContent(item) {
-  return `<span class="item-frame">${itemArt(item)}<span class="item-stars" role="img" aria-label="${item.rarity}성">
+  return `<span class="item-frame">${itemArt(item)}<span class="item-stars" role="img" aria-label="${t('rarity', { n: item.rarity })}">
       <span class="item-star-glyphs" aria-hidden="true">${'★'.repeat(item.rarity)}</span>
-      <span class="item-rarity-text" aria-hidden="true">${item.rarity}성</span>
+      <span class="item-rarity-text" aria-hidden="true">${t('rarityBadge', { n: item.rarity })}</span>
     </span></span>
-    <span class="item-name">${item.name}</span>`;
+    <span class="item-name">${itemName(item)}</span>`;
 }
 
 function renderResults(animate = false) {
@@ -168,7 +205,7 @@ function renderResults(animate = false) {
     return `<li class="item-card rarity-${item.rarity}" style="--position:${index}">${itemContent(item)}</li>`;
   }).join('');
   summary.innerHTML = [5, 4, 3].map(rarity =>
-    `<span class="summary-count rarity-${rarity}">${rarity}성 ${counts[rarity]}</span>`).join('');
+    `<span class="summary-count rarity-${rarity}">${t('rarityBadge', { n: rarity })} ${number(counts[rarity])}</span>`).join('');
   return counts;
 }
 
@@ -177,8 +214,8 @@ function renderCollectionList(list, counts, rarity) {
   list.innerHTML = Object.values(items).filter(item => counts[item.id]).map(item => `
     <li class="collection-entry rarity-${rarity}">
       <span class="item-frame">${itemArt(item)}</span>
-      <span class="collection-name">${item.name}</span>
-      <strong class="collection-count">${formatNumber(counts[item.id])}회</strong>
+      <span class="collection-name">${itemName(item)}</span>
+      <strong class="collection-count">${t('copies', { n: number(counts[item.id]) })}</strong>
     </li>
   `).join('');
 }
@@ -187,11 +224,11 @@ function renderCollection() {
   const { observation, banner, progress } = current();
   const { counts, total, unknown } = summarizeFiveStars(progress, banner.target?.id);
   const note = $('collection-note');
-  $('collection-heading').textContent = `${banner.target?.name ?? observation.name} 5성 누적 획득`;
-  $('collection-total').textContent = `총 ${formatNumber(total)}회`;
+  $('collection-heading').textContent = t('collectionFive', { name: banner.target ? itemName(banner.target) : observationName(state.active) });
+  $('collection-total').textContent = t('totalCopies', { count: t('copies', { n: number(total) }) });
   $('collection-empty').hidden = total > 0 || unknown > 0;
   note.hidden = !unknown;
-  note.textContent = unknown ? `이 관측의 이전 기록에서 획득 대상을 확인할 수 없는 5성이 ${formatNumber(unknown)}개 있습니다.` : '';
+  note.textContent = unknown ? t('collectionUnknown', { n: number(unknown) }) : '';
   renderCollectionList($('collection-list'), counts, 5);
 
   const tracksCharacters = observation.type === 'character';
@@ -199,7 +236,7 @@ function renderCollection() {
   if (!tracksCharacters) return;
   const fourCounts = progress.fourByBanner[banner.id] ?? {};
   const fourTotal = Object.values(fourCounts).reduce((sum, count) => sum + count, 0);
-  $('collection-four-total').textContent = `총 ${formatNumber(fourTotal)}회`;
+  $('collection-four-total').textContent = t('totalCopies', { count: t('copies', { n: number(fourTotal) }) });
   $('collection-four-empty').hidden = fourTotal > 0;
   $('collection-four-note').hidden = !progress.fourHistoryPartial || !progress.latest[banner.id];
   renderCollectionList($('collection-four-list'), fourCounts, 4);
@@ -213,8 +250,10 @@ function renderReward() {
   const available = progress.rewards.filter(reward => !reward.itemId).length;
   const claimed = progress.rewards.filter(reward => reward.itemId);
   const nextAt = nextRewardAt(progress.total);
-  const status = [available ? `선택 가능 ${available}회` : `다음 보상까지 ${formatNumber(nextAt - progress.total)}회 (누적 ${formatNumber(nextAt)}회)`];
-  if (claimed.length) status.push(`최근 획득 ${items[claimed.at(-1).itemId].name}`);
+  const status = [available
+    ? t('rewardAvailable', { count: t('copies', { n: number(available) }) })
+    : t('rewardNext', { count: pullCount(nextAt - progress.total), total: pullCount(nextAt) })];
+  if (claimed.length) status.push(t('rewardRecent', { name: itemName(items[claimed.at(-1).itemId]) }));
   $('reward-status').textContent = status.join(' · ');
   $('reward-open').disabled = !available;
 }
@@ -235,12 +274,19 @@ function selectObservation(id) {
   render();
 }
 
-$('observation-tabs').innerHTML = observationIds.map(id => {
-  const { name, kind, icon: type } = observations[id];
-  return `<button class="observation-tab" id="tab-${id}" data-observation="${id}" role="tab" aria-controls="observation-panel" type="button">
-    ${icon(type)}<span><strong>${name}</strong><small>${kind}</small></span>
-  </button>`;
-}).join('');
+$('language-select').innerHTML = Object.entries(languages).map(([code, label]) =>
+  `<option value="${code}" lang="${code}">${label}</option>`).join('');
+$('language-select').addEventListener('change', event => {
+  const locale = event.target.value;
+  if (!Object.hasOwn(languages, locale)) return;
+  renderLanguage(locale);
+  try {
+    localStorage.setItem(languageKey, locale);
+  } catch {
+    // Keep the language selected for this page when storage is unavailable.
+  }
+});
+document.addEventListener('azur-themechange', renderThemeLabel);
 
 $('observation-tabs').addEventListener('click', event => {
   const tab = event.target.closest('button[data-observation]');
@@ -278,7 +324,9 @@ function pull(count) {
   renderReward();
   const counts = renderResults(true);
   if (counts[5] || counts[4]) renderCollection();
-  $('announcement').textContent = `누적 ${formatNumber(progress.total)}회. 이번 관측에서 5성 ${counts[5]}개, 4성 ${counts[4]}개, 3성 ${counts[3]}개를 획득했습니다.`;
+  $('announcement').textContent = t('pullAnnouncement', {
+    count: pullCount(progress.total), five: number(counts[5]), four: number(counts[4]), three: number(counts[3]),
+  });
   if (matchMedia('(max-width: 760px)').matches) {
     const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
     $('result-grid').scrollIntoView({ block: 'nearest', behavior });
@@ -292,23 +340,28 @@ $('guide-open').addEventListener('click', () => {
   const { observation } = current();
   const { base, soft, high, cap } = observation.odds;
   const rows = observation.limit
-    ? [[`1~${observation.limit - 1}회`, percent(base)], [`${observation.limit}회`, '미획득 시 100%']]
-    : [[`1~${soft - 1}회`, percent(base)], [`${soft}~${high - 1}회`, '매회 +2%p'], [`${high}~${cap - 1}회`, '매회 +8%p'], [`${cap}회`, '100%']];
-  const extra = {
-    fate: '한정 캐릭터 배너 사이에 누적 관측과 천장 진행도를 공유합니다.',
-    bond: '한정 무기 배너 사이에 누적 관측과 천장 진행도를 공유합니다.',
-    order: `누적 ${firstReward}회에 첫 캐릭터 선택권을 받고, 이후 ${rewardInterval}회마다 선택권을 하나 더 받습니다.`,
-    eternity: '지정한 상시 5성 무기를 획득하면 결과에 5성 무기로 표시합니다.',
-    leap: `페페를 제외한 상시 5성 캐릭터가 등장합니다. ${observation.limit}회 관측을 마치면 배너가 종료됩니다.`,
-  };
-  const reset = observation.limit ? '도약 관측은 다른 관측과 진행도를 공유하지 않습니다.' : '5성을 뽑으면 천장 진행도가 초기화됩니다.';
+    ? [[pullCount(1, observation.limit - 1), percent(base)], [pullCount(observation.limit), t('guideGuaranteed')]]
+    : [
+      [pullCount(1, soft - 1), percent(base)],
+      [pullCount(soft, high - 1), t('guideIncrement', { delta: number(2) })],
+      [pullCount(high, cap - 1), t('guideIncrement', { delta: number(8) })],
+      [pullCount(cap), percent(100)],
+    ];
+  const guideKeys = { fate: 'guideFate', bond: 'guideBond', order: 'guideOrder', eternity: 'guideEternity', leap: 'guideLeap' };
+  const extra = t(guideKeys[state.active], {
+    first: pullCount(firstReward),
+    interval: pullCount(rewardInterval),
+    name: itemName(items.peipei),
+    count: pullCount(observation.limit ?? cap),
+  });
+  const reset = t(observation.limit ? 'guideSeparate' : 'guidePityReset');
   $('guide-content').innerHTML = `
-    <p>${observation.name}의 5성 획득 확률입니다. ${reset}</p>
-    <table class="guide-table"><thead><tr><th scope="col">천장 기준 회차</th><th scope="col">5성 획득 확률</th></tr></thead>
+    <p>${t('guideIntro', { name: observationName(state.active) })} ${reset}</p>
+    <table class="guide-table"><thead><tr><th scope="col">${t('guideRound')}</th><th scope="col">${t('guideRate')}</th></tr></thead>
     <tbody>${rows.map(([range, rate]) => `<tr><td>${range}</td><td>${rate}</td></tr>`).join('')}</tbody></table>
-    <p class="guide-note">${extra[state.active]}</p>
-    <p class="guide-note">1회와 10회 관측 모두 보장 횟수에 합산됩니다. 연속 ${fourStarGuarantee - 1}회 동안 4성 이상이 나오지 않으면 다음 회차에서 4성 이상을 확정 획득합니다. 4성 기본 확률은 시뮬레이터 가정값인 ${fourStarRate}%입니다.</p>
-    <p class="guide-note">같은 등급의 무작위 캐릭터는 동일한 확률로 등장합니다.</p>
+    <p class="guide-note">${extra}</p>
+    <p class="guide-note">${t('guideFour', { count: pullCount(fourStarGuarantee - 1), rate: percent(fourStarRate) })}</p>
+    <p class="guide-note">${t('guideEqual')}</p>
   `;
   $('guide-dialog').showModal();
 });
@@ -316,10 +369,9 @@ $('guide-open').addEventListener('click', () => {
 $('reset-open').addEventListener('click', () => {
   resetObservationId = state.active;
   const observation = observations[resetObservationId];
-  const scope = observation.banners.length > 1 ? `${observation.name}의 두 배너` : observation.name;
-  const rewards = observation.reward ? ', 선택 보상' : '';
-  const rarity = observation.type === 'character' ? '4·5성' : '5성';
-  $('reset-description').textContent = `${scope} 초기화 시 뽑기 횟수, 천장 진행도, 최근 결과, ${rarity} 획득 기록${rewards}이 삭제됩니다.`;
+  const scope = t(observation.banners.length > 1 ? 'resetPair' : 'resetSingle', { name: observationName(resetObservationId) });
+  const description = t('resetDescription', { scope });
+  $('reset-description').textContent = observation.reward ? `${description} ${t('resetRewards')}` : description;
   $('reset-dialog').returnValue = '';
   $('reset-dialog').showModal();
 });
@@ -332,7 +384,7 @@ $('reset-dialog').addEventListener('close', event => {
   renderReward();
   renderResults();
   renderCollection();
-  $('announcement').textContent = `${observations[resetObservationId].name} 기록을 초기화했습니다.`;
+  $('announcement').textContent = t('resetDone', { name: observationName(resetObservationId) });
   resetObservationId = null;
 });
 
@@ -341,7 +393,7 @@ $('reward-open').addEventListener('click', () => {
   if (!pendingReward) return;
   selectedRewardId = null;
   $('reward-claim').disabled = true;
-  $('reward-dialog-description').textContent = `누적 ${formatNumber(pendingReward.at)}회 보상으로 획득할 캐릭터를 골라주세요.`;
+  $('reward-dialog-description').textContent = t('rewardDialogDescription', { count: pullCount(pendingReward.at) });
   $('reward-choices').innerHTML = standardCharacters.map(item => `
     <button class="item-card rarity-5 reward-option" type="button" aria-pressed="false" data-item="${item.id}">${itemContent(item)}</button>
   `).join('');
@@ -361,11 +413,11 @@ $('reward-choices').addEventListener('click', event => {
 $('reward-claim').addEventListener('click', () => {
   if (!pendingReward || pendingReward.itemId || !standardIds.has(selectedRewardId)) return;
   pendingReward.itemId = selectedRewardId;
-  $('announcement').textContent = `선택 보상으로 ${items[selectedRewardId].name}을(를) 획득했습니다.`;
+  $('announcement').textContent = t('rewardClaimed', { name: itemName(items[selectedRewardId]) });
   $('reward-dialog').close();
   saveState();
   renderReward();
   renderCollection();
 });
 
-render();
+renderLanguage(initialLanguage());
