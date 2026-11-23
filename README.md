@@ -15,30 +15,18 @@ powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\preview.ps1
 
 ## Cloudflare 배포
 
-### GitHub 연동 자동 배포
+기존 Cloudflare Worker `azupro`의 프로덕션 사이트는 [azupro.yohane-aqours.com](https://azupro.yohane-aqours.com)입니다. [GitHub 저장소](https://github.com/MaratangNearl/azupro_gacha_simulator)의 `main`을 Workers Builds에 연결하면 푸시할 때마다 자동으로 배포됩니다.
 
-1. GitHub에서 `azupro_gacha_simulator` 공개 저장소를 만들고 로컬 `main` 브랜치를 푸시합니다. 새 저장소를 만들 때 README 초기화 옵션을 해제하면 로컬 커밋을 바로 푸시할 수 있습니다.
-2. Cloudflare의 **Workers & Pages**에서 **Create application → Pages → Import an existing Git repository**를 선택한 뒤 `azupro_gacha_simulator`를 연결합니다. GitHub에서 Cloudflare 앱의 접근 범위를 선택할 때는 이 저장소를 지정합니다.
-3. 다음 값으로 첫 배포를 시작합니다. 이후 `main`에 푸시할 때마다 Pages가 자동으로 배포합니다.
+### Workers Builds 설정
 
 | 설정 | 값 |
 | --- | --- |
 | Production branch | `main` |
-| Framework preset | `None` |
-| Build command | `exit 0` |
-| Build output directory | `public` |
-| Root directory | 기본값 |
+| Build command | 비워둠 |
+| Deploy command | `npx wrangler deploy` |
+| Root directory | 저장소 루트 |
 
-[Cloudflare Pages 정적 HTML 가이드](https://developers.cloudflare.com/pages/framework-guides/deploy-anything/) · [GitHub 저장소 연동 가이드](https://developers.cloudflare.com/pages/configuration/git-integration/github-integration/)
-
-### 직접 배포
-
-| 대상 | 배포 방법 |
-| --- | --- |
-| Cloudflare Pages | 직접 업로드로 생성한 Pages 프로젝트에 `public/`을 업로드하거나 `npx wrangler pages deploy public --project-name <Pages 프로젝트 이름>`을 실행합니다. |
-| Cloudflare Workers | `npx wrangler deploy --config wrangler.worker.jsonc`를 실행합니다. 설정 파일에서 Worker 이름을 바꿀 수 있습니다. |
-
-[Pages 직접 업로드 문서](https://developers.cloudflare.com/pages/get-started/direct-upload/) · [Workers 정적 자산 문서](https://developers.cloudflare.com/workers/static-assets/)
+[Wrangler 설정](wrangler.jsonc)에서 정적 자산 폴더 `public/`과 기존 사용자 지정 도메인을 지정합니다. [Cloudflare Workers Builds 문서](https://developers.cloudflare.com/workers/ci-cd/builds/)
 
 ## 시뮬레이션 규칙
 
