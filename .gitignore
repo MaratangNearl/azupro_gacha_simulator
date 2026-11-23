@@ -1,0 +1,15 @@
+# Local credentials and tooling
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+.wrangler/
+node_modules/
+
+# Original references used to prepare the images in public/assets
+/always_chara_pickup.png
+/always_weapon_pickup.png
+/chara_pickup.png
+/example_result.png
+/novice_chara_pickup.png
+/weapon_pickup.png
