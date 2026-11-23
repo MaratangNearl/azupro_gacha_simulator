@@ -50,6 +50,7 @@ const characterOdds = { base: 0.8, soft: 71, high: 81, cap: 90 };
 const weaponOdds = { base: 1.2, soft: 61, high: 71, cap: 80 };
 
 export const fourStarRate = 6;
+export const fourStarGuarantee = 10;
 export const firstReward = 50;
 export const rewardInterval = 200;
 

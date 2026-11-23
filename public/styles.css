@@ -195,6 +195,7 @@ progress::-moz-progress-bar { background: linear-gradient(90deg, #aa83e1, #f4ce9
 .stats dd { font-weight: 760; font-size: 1.35rem; margin-top: 5px; white-space: nowrap; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .stats > div:last-child dd { color: var(--gold); }
 .rate-note { color: var(--muted); font-size: .875rem; min-height: 2.6em; display: flex; align-items: center; line-height: 1.35; margin-top: 4px; }
+.rarity-note { color: var(--muted); font-size: .875rem; line-height: 1.35; }
 .actions { display: grid; grid-template-columns: 1fr 1.18fr; gap: 9px; padding-top: 11px; margin-top: auto; }
 .pull-button {
   min-height: 47px;

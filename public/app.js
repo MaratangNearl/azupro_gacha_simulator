@@ -1,5 +1,5 @@
-import { firstReward, fourStarRate, items, observations, rewardInterval, standardCharacters } from './catalog.js';
-import { draw, emptyProgress, nextFiveRate, nextRewardAt, restoreFiveCounts, summarizeFiveStars } from './gacha.js';
+import { firstReward, fourStarGuarantee, fourStarRate, items, observations, rewardInterval, standardCharacters } from './catalog.js';
+import { draw, emptyProgress, nextFiveRate, nextRewardAt, restoreFiveCounts, restoreFourPlusPity, summarizeFiveStars } from './gacha.js';
 
 const storageKey = 'azur-promilia-observation-v1';
 const observationIds = Object.keys(observations);
@@ -44,6 +44,7 @@ function readState() {
     }
 
     state.fiveByItem = restoreFiveCounts(observation, state, stored?.fiveByItem);
+    state.fourPlusPity = restoreFourPlusPity(state, stored?.fourPlusPity);
     progress[id] = state;
     selected[id] = observation.banners.find(banner => banner.id === saved?.selected?.[id])?.id
       ?? observation.banners[0].id;
@@ -118,6 +119,8 @@ function renderProgress() {
   $('pull-one').disabled = remaining < 1;
   $('pull-ten').disabled = remaining < 10;
   $('reset-open').disabled = progress.total === 0;
+  $('rarity-note').hidden = remaining < 1;
+  $('rarity-note').textContent = `4성 이상 보장까지 최대 ${fourStarGuarantee - progress.fourPlusPity}회`;
 
   if (!remaining) {
     $('rate-note').textContent = '도약 관측이 종료되었습니다.';
@@ -166,14 +169,16 @@ function renderResults(animate = false) {
 }
 
 function renderCollection() {
-  const { counts, total, unknown } = summarizeFiveStars(state.progress);
+  const { observation, banner, progress } = current();
+  const { counts, total, unknown } = summarizeFiveStars(progress, banner.target?.id);
   const list = $('collection-list');
   const note = $('collection-note');
+  $('collection-heading').textContent = `${banner.target?.name ?? observation.name} 5성 누적 획득`;
   $('collection-total').textContent = `총 ${formatNumber(total)}회`;
   list.hidden = Object.keys(counts).length === 0;
-  $('collection-empty').hidden = total > 0;
+  $('collection-empty').hidden = total > 0 || unknown > 0;
   note.hidden = !unknown;
-  note.textContent = unknown ? `이전 기록에서 획득 대상을 확인할 수 없는 5성이 ${formatNumber(unknown)}개 있습니다.` : '';
+  note.textContent = unknown ? `이 관측의 이전 기록에서 획득 대상을 확인할 수 없는 5성이 ${formatNumber(unknown)}개 있습니다.` : '';
   list.innerHTML = Object.values(items).filter(item => counts[item.id]).map(item => `
     <li class="collection-entry rarity-5">
       <span class="item-frame">${itemArt(item)}</span>
@@ -203,6 +208,7 @@ function render() {
   renderProgress();
   renderReward();
   renderResults();
+  renderCollection();
 }
 
 function selectObservation(id) {
@@ -242,6 +248,7 @@ $('banner-options').addEventListener('click', event => {
   saveState();
   renderBanner();
   renderResults();
+  renderCollection();
   $('banner-options').querySelector('[aria-pressed="true"]').focus();
 });
 
@@ -283,7 +290,7 @@ $('guide-open').addEventListener('click', () => {
     <table class="guide-table"><thead><tr><th scope="col">천장 기준 회차</th><th scope="col">5성 획득 확률</th></tr></thead>
     <tbody>${rows.map(([range, rate]) => `<tr><td>${range}</td><td>${rate}</td></tr>`).join('')}</tbody></table>
     <p class="guide-note">${extra[state.active]}</p>
-    <p class="guide-note">10회 관측의 결과 10개 중 최소 1개는 4성입니다. 4성 기본 확률은 시뮬레이터 가정값인 ${fourStarRate}%입니다.</p>
+    <p class="guide-note">1회와 10회 관측 모두 보장 횟수에 합산됩니다. 연속 ${fourStarGuarantee - 1}회 동안 4성 이상이 나오지 않으면 다음 회차에서 4성 이상을 확정 획득합니다. 4성 기본 확률은 시뮬레이터 가정값인 ${fourStarRate}%입니다.</p>
     <p class="guide-note">같은 등급의 무작위 캐릭터는 동일한 확률로 등장합니다.</p>
   `;
   $('guide-dialog').showModal();
@@ -344,4 +351,3 @@ $('reward-claim').addEventListener('click', () => {
 });
 
 render();
-renderCollection();
