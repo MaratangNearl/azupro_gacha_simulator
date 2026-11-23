@@ -15,7 +15,7 @@ powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\preview.ps1
 
 ## Cloudflare 배포
 
-기존 Cloudflare Worker `azupro`의 프로덕션 사이트는 [azupro.yohane-aqours.com](https://azupro.yohane-aqours.com)입니다. [GitHub 저장소](https://github.com/MaratangNearl/azupro_gacha_simulator)의 `main`을 Workers Builds에 연결하면 푸시할 때마다 자동으로 배포됩니다.
+Cloudflare Worker `azupro`의 프로덕션 사이트는 [azupro.yohane-aqours.com](https://azupro.yohane-aqours.com)입니다. [GitHub 저장소](https://github.com/MaratangNearl/azupro_gacha_simulator)의 `main`은 Workers Builds에 연결되어 있으며, 푸시할 때마다 자동으로 배포됩니다.
 
 ### Workers Builds 설정
 
