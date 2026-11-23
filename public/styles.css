@@ -126,6 +126,7 @@ h1, h2, p, dl, dd { margin: 0; }
 .hero[data-theme="indigo"] { --hero-base: #201c41; --hero-fade: #201c41bd; --hero-light: #c2bef8; --hero-outline: #666396; }
 .hero[data-theme="azure"] { --hero-base: #151e37; --hero-fade: #151e37bd; --hero-light: #bad9fa; --hero-outline: #4a668b; }
 .hero[data-theme="mint"] { --hero-base: #182a2b; --hero-fade: #182a2bbd; --hero-light: #c6ecd3; --hero-outline: #51816d; }
+.hero-art { display: contents; }
 .hero-image { position: absolute; inset: 0 0 0 auto; width: 69%; height: 100%; object-fit: cover; object-position: center 27%; z-index: -2; }
 .hero[data-art="xiaoyu"] .hero-image { object-position: 50% 27%; }
 .hero[data-art="chiyo"] .hero-image { object-position: 50% 25%; }
